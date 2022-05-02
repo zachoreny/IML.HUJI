@@ -41,7 +41,10 @@ class GaussianNaiveBayes(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        m, d = X.shape
+        if len(X.shape) == 1:
+            m, d = len(X), 1
+        else:
+            m, d = X.shape
         self.classes_ = np.unique(y)
         k = self.classes_.size
         self.pi_ = np.ndarray(k)
@@ -67,7 +70,10 @@ class GaussianNaiveBayes(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        m, d = X.shape
+        if len(X.shape) == 1:
+            m, d = len(X), 1
+        else:
+            m, d = X.shape
         prediction = np.ndarray(m)
         for i, sample in enumerate(self.likelihood(X)):
             prediction[i] = np.argmax(sample)
@@ -91,7 +97,10 @@ class GaussianNaiveBayes(BaseEstimator):
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
 
-        m, d = X.shape
+        if len(X.shape) == 1:
+            m, d = len(X), 1
+        else:
+            m, d = X.shape
         k = self.classes_.size
         likelihoods = []
 

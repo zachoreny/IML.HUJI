@@ -95,7 +95,10 @@ class Perceptron(BaseEstimator):
         Fits model with or without an intercept depending on value of `self.fit_intercept_`
         """
         self.fitted_ = True
-        n, d = X.shape
+        if len(X.shape) == 1:
+            n, d = len(X), 1
+        else:
+            n, d = X.shape
 
         # validate input
         if n == 0 or y.size == 0:
@@ -132,7 +135,10 @@ class Perceptron(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        n, d = X.shape
+        if len(X.shape) == 1:
+            n, d = len(X), 1
+        else:
+            n, d = X.shape
         if self.include_intercept_:
             X = np.concatenate((np.ones((n, 1)), X), axis=1)
         return np.sign(X @ self.coefs_)
