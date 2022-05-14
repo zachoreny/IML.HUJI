@@ -3,6 +3,7 @@ from typing import Tuple, NoReturn
 from ...base import BaseEstimator
 import numpy as np
 from itertools import product
+from ...metrics import misclassification_error
 
 
 class DecisionStump(BaseEstimator):
@@ -39,7 +40,18 @@ class DecisionStump(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        min_loss = np.inf
+        for j, loss in enumerate(X.shape[1]):
+            thr, thr_err = self._find_threshold(X[j], y, 1)
+            if thr_err < min_loss:
+                self.threshold_ = thr
+                self.j_ = j
+                self.sign = 1
+            thr, thr_err = self._find_threshold(X[j], y, -1)
+            if thr_err < min_loss:
+                self.threshold_ = thr
+                self.j_ = j
+                self.sign = -1
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -63,7 +75,7 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        return self.sign_ * ((X[:, self.j_] >= self.threshold_) * 2 - 1)
 
     def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
         """
@@ -95,7 +107,25 @@ class DecisionStump(BaseEstimator):
         For every tested threshold, values strictly below threshold are predicted as `-sign` whereas values
         which equal to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        n = len(values)
+        # check input
+        if n <= 1:
+            return 0, 0
+        # separate D and the labels from each other
+        D = abs(labels)
+        labels = np.sign(labels)
+        # the indices that would sort the values array
+        sorted_ind = np.argsort(values)
+        values = values[sorted_ind]
+        labels = labels[sorted_ind]
+        D = D[sorted_ind]
+        thr_pred = [(values[i] + values[i + 1]) / 2 for i in range(len(values) - 1)]
+        thr_pred = np.concatenate([[-np.inf], thr_pred, [np.inf]])
+        # min_loss represents the probability of the stump's classification
+        min_loss = np.sum(D[labels == sign])
+        losses = np.append(min_loss, min_loss - np.cumsum(D * (labels * sign)))
+        min_loss_id = np.argmin(losses)
+        return thr_pred[min_loss_id], losses[min_loss_id]
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -114,4 +144,5 @@ class DecisionStump(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        raise NotImplementedError()
+        self.fit(X, y)
+        return misclassification_error(X[self.j_], y)
