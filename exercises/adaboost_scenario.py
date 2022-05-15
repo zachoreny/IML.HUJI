@@ -77,7 +77,7 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
                        rows=(i // 2) + 1, cols=(i % 2) + 1)
 
     fig.update_layout(title=rf"$\textbf{{(2) Decision Boundaries Of N Learners}}$")
-    # fig.show()
+    fig.show()
 
     # Question 3: Decision surface of best performing ensemble
     best_idx = np.argmin(test_errors)
@@ -90,7 +90,7 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
                     mode="markers", showlegend=False,
                     marker=dict(color=test_y, colorscale=[custom[0], custom[-1]],
                                 line=dict(color="black", width=1)))])
-    # fig.show()
+    fig.show()
 
     # Question 4: Decision surface with weighted samples
     D = adaboost.D_
@@ -105,5 +105,5 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # fit_and_evaluate_adaboost(noise=0)
+    fit_and_evaluate_adaboost(noise=0)
     fit_and_evaluate_adaboost(noise=0.4)
