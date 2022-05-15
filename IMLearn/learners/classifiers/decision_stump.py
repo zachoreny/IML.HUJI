@@ -41,17 +41,14 @@ class DecisionStump(BaseEstimator):
             Responses of input data to fit to
         """
         min_loss = np.inf
-        for j, loss in enumerate(X.shape[1]):
-            thr, thr_err = self._find_threshold(X[j], y, 1)
+        for sign, j in product([-1, 1], range(X.shape[1])):
+            thr, thr_err = self._find_threshold(X[:, j], y, sign)
             if thr_err < min_loss:
                 self.threshold_ = thr
                 self.j_ = j
-                self.sign = 1
-            thr, thr_err = self._find_threshold(X[j], y, -1)
-            if thr_err < min_loss:
-                self.threshold_ = thr
-                self.j_ = j
-                self.sign = -1
+                self.sign = sign
+                min_loss = thr_err
+        return
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -75,7 +72,7 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        return self.sign_ * ((X[:, self.j_] >= self.threshold_) * 2 - 1)
+        return self.sign * ((X[:, self.j_] <= self.threshold_) * 2 - 1)
 
     def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
         """
@@ -113,11 +110,11 @@ class DecisionStump(BaseEstimator):
             return 0, 0
         # separate D and the labels from each other
         D = abs(labels)
-        labels = np.sign(labels)
         # the indices that would sort the values array
         sorted_ind = np.argsort(values)
         values = values[sorted_ind]
         labels = labels[sorted_ind]
+        labels = np.sign(labels) + (labels == 0)
         D = D[sorted_ind]
         thr_pred = [(values[i] + values[i + 1]) / 2 for i in range(len(values) - 1)]
         thr_pred = np.concatenate([[-np.inf], thr_pred, [np.inf]])
@@ -145,4 +142,6 @@ class DecisionStump(BaseEstimator):
             Performance under missclassification loss function
         """
         self.fit(X, y)
+        # D = abs(y)
+        # y = np.sign(y) + (y == 0)
         return misclassification_error(X[self.j_], y)
